@@ -783,7 +783,6 @@ fail_nocontext:
 struct mm_struct *new_dup_mm(struct task_struct *tsk)
 {
 	struct mm_struct *mm, *oldmm = current->mm;
-	struct vm_area_struct *vma;
 	int err;
 	unsigned long mm_size;
 	
@@ -800,7 +799,7 @@ struct mm_struct *new_dup_mm(struct task_struct *tsk)
 	mm_size = mm->end_data - mm->start_data;
 	mm->start_data = (unsigned long) kmalloc(mm_size, GFP_KERNEL);
 	mm->end_data = mm->start_data + mm_size;
-	memcpy(mm->start_data, oldmm->start_data, mm_size);
+	memcpy((void *) mm->start_data, (void *) oldmm->start_data, mm_size);
 
 	mm_init_cpumask(mm);
 
