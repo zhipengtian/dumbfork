@@ -882,8 +882,10 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 	retval = -ENOMEM;
 	if (clone_flags & CLONE_NOW) {
 		mm = new_dup_mm(tsk);
+		printk("You are in the dumbfork mode.\n");
 	} else {
 		mm = dup_mm(tsk);
+		printk("You are not in the dumbfork mode.\n");
 	}
 	
 	if (!mm)
