@@ -347,3 +347,4 @@ ENTRY(sys_call_table)
 	.long sys_sendmmsg		/* 345 */
 	.long sys_setns
 	.long ptregs_dumbfork
+	.long sys_myadd

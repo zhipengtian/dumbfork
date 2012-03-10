@@ -683,6 +683,8 @@ __SYSCALL(__NR_sendmmsg, sys_sendmmsg)
 __SYSCALL(__NR_setns, sys_setns)
 #define __NR_dumbfork                           309
 __SYSCALL(__NR_dumbfork, stub_dumbfork)
+#define __NR_myadd                              310
+__SYSCALL(__NR_myadd, sys_myadd)
 
 #ifndef __NO_STUBS
 #define __ARCH_WANT_OLD_READDIR
