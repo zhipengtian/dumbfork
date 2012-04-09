@@ -64,8 +64,8 @@ asmlinkage long sys_spmap_info(int pid, char *buff, int size)
 	sprintf(res+strlen(res),"\t%s\n", "[ data ]");
       else sprintf(res+strlen(res), "\t%s\n", "[ anon ]");
     }
-    if (i<=(count-1))
-			vmem = vmem->vm_next;
+    if (i<(count-1))
+      vmem = vmem->vm_next;
   }
   copy_to_user(buff, res, size);
   return 0;
