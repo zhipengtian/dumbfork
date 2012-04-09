@@ -33,9 +33,10 @@ asmlinkage long sys_spmap_info(int pid, char *buff, int size)
   sprintf(res,"process %d\n", pid);
 
   char *pathname;
-  char *tmp
+  char *tmp;
   struct file *file;
   struct path path;
+  const struct path *p;
   
   int i;
   for (i=0; i<count; i++) {
@@ -46,8 +47,9 @@ asmlinkage long sys_spmap_info(int pid, char *buff, int size)
     if (vmem->vm_file) {
       file = vmem->vm_file;
       path = file->f_path;
+      p = (const struct path *)&path;
       tmp = (char *)__get_free_page(GFP_TEMPORARY);
-      pathname = d_path(path, tmp, PAGE_SIZE);
+      pathname = d_path(p, tmp, PAGE_SIZE);
       sprintf(res+strlen(res), "\t%s\n", pathname);
       free_page((unsigned long)tmp);
     } else {
