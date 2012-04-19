@@ -850,7 +850,6 @@ out:
  * already present in the new task to be cleared in the whole range
  * covered by this vma.
  */
-
 static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		unsigned long address, pte_t *page_table, pmd_t *pmd,
 		spinlock_t *ptl, pte_t orig_pte);
@@ -928,14 +927,23 @@ out_set_pte:
 	
 	if (dst_mm->dumbfork | src_mm->dumbfork) {
 		printk("Get into dumbfok mode in copy_one_pte.\n");
-		pgd_t *pgd;
+		
+		struct vm_area_struct *heap;
+		unsigned long address;
+		int ret = 0;
+		down_read(&dst_mm->mmap_sem);
+		heap = find_vma(src_mm, src_mm->start_brk);
+		address = heap->vm_start;
+		handle_mm_fault(dst_mm, heap, address, FAULT_FLAG_WRITE);
+		up_read(&dst_mm->mmap_sem);
+/*		pgd_t *pgd;
 		pud_t *pud;
 		pmd_t *pmd;
 		pte_t entry;
 		spinlock_t *ptl;
 		struct vm_area_struct *heap;
 		unsigned long address;
-		int ret = 0;	
+		int ret = 0;
 
 		heap = find_vma(src_mm, src_mm->start_brk);
 		address = heap->vm_start;
@@ -949,7 +957,7 @@ out_set_pte:
 		spin_lock(ptl);
 		
 		printk("Going to call do_wp_page.\n");		
-		ret = do_wp_page(dst_mm, heap, address, dst_pte, pmd, ptl, entry);
+		ret = do_wp_page(dst_mm, heap, address, dst_pte, pmd, ptl, entry);*/
 		printk("CONGRADULATIONS! dumbfork succeeded!!!!!.\n");
 		return ret;
 	}	
@@ -3458,9 +3466,11 @@ int handle_pte_fault(struct mm_struct *mm,
 	if (unlikely(!pte_same(*pte, entry)))
 		goto unlock;
 	if (flags & FAULT_FLAG_WRITE) {
-		if (!pte_write(entry))
+		if (!pte_write(entry)) {
+			printk("Call do_wp_page() successfully.\n");			
 			return do_wp_page(mm, vma, address,
 					pte, pmd, ptl, entry);
+		}
 		entry = pte_mkdirty(entry);
 	}
 	entry = pte_mkyoung(entry);
