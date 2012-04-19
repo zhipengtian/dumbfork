@@ -851,17 +851,16 @@ out:
  * covered by this vma.
  */
 
+static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		unsigned long address, pte_t *page_table, pmd_t *pmd,
+		spinlock_t *ptl, pte_t orig_pte);
+
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
 		unsigned long addr, int *rss)
 {
-	unsigned long vm_flags;
-	if (dst_mm->dumbfork | src_mm->dumbfork) {
-		printk("Changed flags in copy_one_pte\n");		
-		vm_flags = 0x00000000;
-	}
-	else vm_flags = vma->vm_flags;
+	unsigned long vm_flags = vma->vm_flags;
 	pte_t pte = *src_pte;
 	struct page *page;
 
@@ -950,11 +949,8 @@ out_set_pte:
 		spin_lock(ptl);
 		
 		printk("Going to call do_wp_page.\n");		
-		
 		ret = do_wp_page(dst_mm, heap, address, dst_pte, pmd, ptl, entry);
-
 		printk("CONGRADULATIONS! dumbfork succeeded!!!!!.\n");
-
 		return ret;
 	}	
 	
