@@ -857,7 +857,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 static inline unsigned long
 copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pte_t *dst_pte, pte_t *src_pte, struct vm_area_struct *vma,
-		unsigned long addr, int *rss)
+		unsigned long addr, int *rss, pmd_t *src_pmd, spinlock_t *src_ptl)
 {
 	unsigned long vm_flags = vma->vm_flags;
 	pte_t pte = *src_pte;
@@ -895,6 +895,7 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		goto out_set_pte;
 	}
 
+
 	/*
 	 * If it's a COW mapping, write protect it both
 	 * in the parent and the child
@@ -921,47 +922,26 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		else
 			rss[MM_FILEPAGES]++;
 	}
+	struct vm_area_struct *heap, *address;
+	heap = find_vma(src_mm, src_mm->start_brk);
+	address = find_vma(src_mm, addr);
+	
+	if ((dst_mm->dumbfork | src_mm->dumbfork) && (heap == address)) {
+	 
+	        //printk("Get into dumbfok mode in copy_one_pte.\n");
+	     
+	        printk("This is a good vm.\n");
+		
+	 	//printk("Going to call do_wp_page.\n");		
+	        do_wp_page(src_mm, vma, addr, src_pte, src_pmd, src_ptl, pte);
+		src_pte = pte_offset_map(src_pmd, addr);
+		spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
+		//printk("CONGRADULATIONS! dumbfork succeeded!!!!!.\n");
+	  
+	}
 
 out_set_pte:
-	set_pte_at(dst_mm, addr, dst_pte, pte);
-	
-	if (dst_mm->dumbfork | src_mm->dumbfork) {
-		printk("Get into dumbfok mode in copy_one_pte.\n");
-		
-		struct vm_area_struct *heap;
-		unsigned long address;
-		int ret = 0;
-		down_read(&dst_mm->mmap_sem);
-		heap = find_vma(src_mm, src_mm->start_brk);
-		address = heap->vm_start;
-		handle_mm_fault(dst_mm, heap, address, FAULT_FLAG_WRITE);
-		up_read(&dst_mm->mmap_sem);
-/*		pgd_t *pgd;
-		pud_t *pud;
-		pmd_t *pmd;
-		pte_t entry;
-		spinlock_t *ptl;
-		struct vm_area_struct *heap;
-		unsigned long address;
-		int ret = 0;
-
-		heap = find_vma(src_mm, src_mm->start_brk);
-		address = heap->vm_start;
-	
-		pgd = pgd_offset(dst_mm, address);
-		pud = pud_alloc(dst_mm, pgd, address);
-		pmd = pmd_alloc(dst_mm, pud, address);
-	
-		entry = *dst_pte;
-		ptl = pte_lockptr(dst_mm, pmd);
-		spin_lock(ptl);
-		
-		printk("Going to call do_wp_page.\n");		
-		ret = do_wp_page(dst_mm, heap, address, dst_pte, pmd, ptl, entry);*/
-		printk("CONGRADULATIONS! dumbfork succeeded!!!!!.\n");
-		return ret;
-	}	
-	
+	set_pte_at(dst_mm, addr, dst_pte, pte);	
 	return 0;
 }
 
@@ -1005,7 +985,7 @@ again:
 			continue;
 		}
 		entry.val = copy_one_pte(dst_mm, src_mm, dst_pte, src_pte,
-							vma, addr, rss);
+							vma, addr, rss, src_pmd, src_ptl);
 		if (entry.val)
 			break;
 		progress += 8;
@@ -3466,8 +3446,7 @@ int handle_pte_fault(struct mm_struct *mm,
 	if (unlikely(!pte_same(*pte, entry)))
 		goto unlock;
 	if (flags & FAULT_FLAG_WRITE) {
-		if (!pte_write(entry)) {
-			printk("Call do_wp_page() successfully.\n");			
+		if (!pte_write(entry)) {			
 			return do_wp_page(mm, vma, address,
 					pte, pmd, ptl, entry);
 		}

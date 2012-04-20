@@ -812,7 +812,9 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 	if (clone_flags & CLONE_NOW) {
 		tsk->dumbfork = 1;
 		printk("clone flag works!\n");	
-	}	
+	} else {
+		tsk->dumbfork = 0;
+	}
 	
 	if (clone_flags & CLONE_VM) {
 		atomic_inc(&oldmm->mm_users);
