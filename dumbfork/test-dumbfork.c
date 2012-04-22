@@ -14,16 +14,15 @@ int main()
 	double dif;
 	int i;
   	
+	// allocate a large data
+	// (Idea from Vaibhav Shankar's dummy.c)
 	int *test = (int*) malloc(sizeof(int) * 1024 * 1024);
-
 	for(i = 0; i < 1024*1024; i++) {
 		test[i] = i;
 	}
 
-
   	//testing fork
   	start = clock();
-  
   	for (i = 0; i <= 1000; i++){
     	pid = fork();
     	if (pid == -1)
@@ -34,23 +33,21 @@ int main()
   	}
   	end = clock();
   	dif = (double)(end - start) / CLOCKS_PER_SEC;
-  	printf("1000 fork system call took %f seconds.\n", dif);
+  	printf("1000 forks took %f seconds.\n", dif);
   
  	//testing dumbfork
  	start = clock();
-   
   	for (i = 0; i <= 1000; i++){
     	pid = syscall(sys_dumbfork);
 		if (pid == -1)
       		printf("Error! Can't dumbfork!\n");
     	else if (pid == 0) {
-    	  exit(0);
+    		exit(0);
     	}
   	}
-   
    	end = clock();
    	dif = (double)(end - start) / CLOCKS_PER_SEC;
-   	printf("1000 dumbfork system call took %f seconds.\n", dif);
+   	printf("1000 dumbforks took %f seconds.\n", dif);
   
   	return 0;
 }

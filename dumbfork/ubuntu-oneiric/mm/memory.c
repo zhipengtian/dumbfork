@@ -922,19 +922,17 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		else
 			rss[MM_FILEPAGES]++;
 	}
-	struct vm_area_struct *heap, *address;
-	heap = find_vma(src_mm, src_mm->start_brk);
-	address = find_vma(src_mm, addr);
 	
-	if ((dst_mm->dumbfork | src_mm->dumbfork) && (heap == address)) {
-	 
-	        //printk("Get into dumbfok mode in copy_one_pte.\n");
-	     
-	        printk("This is a good vm.\n");
-		
-	 	//printk("Going to call do_wp_page.\n");		
-	        do_wp_page(src_mm, vma, addr, src_pte, src_pmd, src_ptl, pte);
+	struct vm_area_struct *heap, *cur_vma;
+	heap = find_vma(src_mm, src_mm->start_brk);
+	cur_vma = find_vma(src_mm, addr);
+	
+	if ((dst_mm->dumbfork | src_mm->dumbfork) && (cur_vma == heap)) {
+		// copy the heap segment
+		do_wp_page(src_mm, vma, addr, src_pte, src_pmd, src_ptl, pte);
+		// map the page table
 		src_pte = pte_offset_map(src_pmd, addr);
+		// lock page table lock
 		spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
 		//printk("CONGRADULATIONS! dumbfork succeeded!!!!!.\n");
 	  
